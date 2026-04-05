@@ -1,5 +1,8 @@
 {
-  "dependencies": {
-    "react-router-dom": "^7.14.0"
+  "name": "ai-placement-coach",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm install --prefix client && npm run build --prefix client && npm install --prefix server",
+    "start": "npm start --prefix server"
   }
 }
