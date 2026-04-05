@@ -172,7 +172,7 @@ Provide concise, constructive feedback (2-3 sentences), highlighting what they d
 });
 
 // Catch-all to serve index.html for React Router
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
