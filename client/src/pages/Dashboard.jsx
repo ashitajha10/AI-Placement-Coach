@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
+    document.title = "Dashboard | AI Placement Coach";
     const rScore = parseInt(localStorage.getItem("resumeScore") || "0");
     const iPracticed = parseInt(localStorage.getItem("interviewsPracticed") || "0");
     const storedName = localStorage.getItem("userName") || "User";
@@ -26,7 +27,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col p-6 pt-28 md:p-12 md:pt-32 font-sans">
+    <div className="relative overflow-hidden flex flex-col p-6 pt-28 md:p-12 md:pt-32 font-sans">
       
       {/* Background ambient gradients */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none transform translate-x-1/4 -translate-y-1/4" />
@@ -48,7 +49,7 @@ export default function Dashboard() {
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
             <div>
-              <p className="text-sm text-slate-400 mb-1">Resume Score</p>
+              <p className="text-sm text-slate-400 mb-1">ATS Score</p>
               <h3 className="text-3xl font-bold text-slate-100">{resumeScore}<span className="text-lg text-slate-500 ml-1">%</span></h3>
             </div>
           </div>

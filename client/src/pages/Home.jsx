@@ -1,8 +1,12 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 export default function Home() {
+  useEffect(() => {
+    document.title = "Home | AI Placement Coach";
+  }, []);
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col items-center justify-center p-6 pt-28 font-sans">
+    <div className="relative overflow-hidden flex flex-col items-center justify-center p-6 pt-28 font-sans">
       
       {/* Background ambient gradients */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2" />

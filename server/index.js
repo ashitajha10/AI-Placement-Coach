@@ -19,41 +19,116 @@ app.use(express.static(path.join(__dirname, "../client/dist")));
 const upload = multer({ dest: "uploads/" });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-const skillsList = [
-  "html",
-  "css",
-  "javascript",
-  "react",
-  "node",
-  "express",
-  "mongodb",
-  "java",
-  "python",
-];
+const fallbackRoleSkills = {
+  frontend: ["html", "css", "javascript", "react", "tailwind", "next.js", "typescript", "browser developer tools"],
+  backend: ["node", "express", "mongodb", "sql", "api", "rest", "graphql", "docker", "aws", "python"],
+  "data analyst": ["python", "pandas", "numpy", "sql", "excel", "tableau", "power bi", "statistics"],
+  "software engineer": ["java", "python", "c++", "data structures", "algorithms", "git", "system design", "testing"],
+};
+
+async function getRoleSkills(role) {
+  const normalizedRole = role.toLowerCase();
+  try {
+    const prompt = `Generate a list of important technical skills required for a ${role}. Return only a clean comma-separated list.`;
+    const result = await model.generateContent(prompt);
+    const skillsText = result.response.text().trim();
+    if (skillsText && !skillsText.includes("failed")) {
+      return skillsText.split(",").map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+    }
+  } catch (err) {
+    console.error("AI skill generation failed, using fallback:", err);
+  }
+
+  // Fallback logic
+  for (const [key, skills] of Object.entries(fallbackRoleSkills)) {
+    if (normalizedRole.includes(key)) {
+      return skills;
+    }
+  }
+  return fallbackRoleSkills["software engineer"];
+}
+
+async function isResume(text) {
+  if (!text || text.length < 150) return false;
+
+  const normalizedText = text.toLowerCase();
+  const sections = [
+    "education",
+    "experience",
+    "work experience",
+    "skills",
+    "projects",
+    "certifications",
+    "internships",
+    "summary",
+    "objective",
+  ];
+
+  let foundSections = 0;
+  sections.forEach((section) => {
+    if (normalizedText.includes(section)) foundSections++;
+  });
+
+  if (foundSections >= 3) return true;
+
+  // Secondary AI check
+  try {
+    const prompt = `Determine if the following text is a professional resume. Answer only YES or NO.\n\nText:\n"""${text.substring(0, 2000)}"""`;
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().trim().toUpperCase();
+    return responseText.includes("YES");
+  } catch (err) {
+    console.error("AI resume detection failed:", err);
+    return false;
+  }
+}
+
+function extractSkills(resumeText, roleSkills) {
+  const normalizedText = resumeText.toLowerCase().replace(/\s+/g, " ");
+  const foundSkills = [];
+  const missingSkills = [];
+
+  roleSkills.forEach(skill => {
+    const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape regex chars
+    const regex = new RegExp(`(?<![a-zA-Z])${escapedSkill}(?![a-zA-Z])`, "i");
+    if (regex.test(normalizedText)) {
+      foundSkills.push(skill);
+    } else {
+      missingSkills.push(skill);
+    }
+  });
+
+  return { foundSkills, missingSkills };
+}
 
 app.post("/api/upload", upload.single("resume"), async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ isResume: false, message: "No file uploaded" });
+    }
+
     const filePath = req.file.path;
+    const targetRole = req.body.role || "Software Engineer";
 
     const dataBuffer = fs.readFileSync(filePath);
     const pdfData = await pdfParse(dataBuffer);
+    const text = pdfData.text;
 
-    const text = pdfData.text.toLowerCase().replace(/\s+/g, " ");
+    const isValidResume = await isResume(text);
+    if (!isValidResume) {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return res.json({
+        isResume: false,
+        message: "Uploaded file does not appear to be a resume. Please upload a valid professional resume.",
+      });
+    }
 
-    const foundSkills = skillsList.filter((skill) => {
-      const regex = new RegExp(`\\b${skill}\\b`, "i");
-      return regex.test(text);
-    });
+    const roleSkills = await getRoleSkills(targetRole);
+    const { foundSkills, missingSkills } = extractSkills(text, roleSkills);
 
-    const missingSkills = skillsList.filter(
-      (skill) => !foundSkills.includes(skill)
-    );
-
-    const score = Math.round(
-      (foundSkills.length / skillsList.length) * 100
-    );
+    let score = Math.round((foundSkills.length / roleSkills.length) * 100);
 
     let suggestions = [];
     let aiFeedback = "";
@@ -62,11 +137,14 @@ app.post("/api/upload", upload.single("resume"), async (req, res) => {
     try {
       const result = await model.generateContent(
         `You are an expert AI Placement Coach and Recruiter.
-Analyze the following resume text extracted from a PDF. Provide a concise, professional evaluation.
+Analyze the following resume text extracted from a PDF for the target role: "${targetRole}".
+Provide a concise, professional evaluation specifically tailored to how well this candidate fits the role of a ${targetRole}.
+
 Include:
-1. Overall Impression (1-2 sentences)
-2. Key Strengths (bullet points)
-3. Areas for Improvement (bullet points)
+1. ATS Score (A number out of 100 representing Applicant Tracking System compatibility for a ${targetRole} role. Format exactly as ATS_SCORE: <number>)
+2. Overall Impression (1-2 sentences)
+3. Key Strengths for ${targetRole} (bullet points)
+4. Areas for Improvement to better fit the ${targetRole} role (bullet points)
 
 Resume Text:
 """
@@ -75,13 +153,16 @@ ${text.substring(0, 5000)}
       );
 
       const response = result.response;
-      aiFeedback = response.text();
+      let rawFeedback = response.text();
 
-      suggestions = aiFeedback
-        .split("\n")
-        .filter((line) => line.trim() !== "");
+      const atsMatch = rawFeedback.match(/ATS_SCORE:\s*(\d+)/i);
+      if (atsMatch && atsMatch[1]) {
+        score = parseInt(atsMatch[1], 10);
+      }
+      
+      aiFeedback = rawFeedback.replace(/ATS_SCORE:\s*\d+\s*\n?/, "").trim();
+      suggestions = aiFeedback.split("\n").filter((line) => line.trim() !== "");
 
-      // Extract Name
       const nameResult = await model.generateContent(
         `Extract the full name of the candidate from the following text. Respond with ONLY the candidate's name, nothing else. If no name is found or it's unclear, respond with "User".\n\nText:\n"""${text.substring(0, 1000)}"""`
       );
@@ -89,28 +170,24 @@ ${text.substring(0, 5000)}
 
     } catch (err) {
       console.error("Gemini failed during analysis:", err);
-      suggestions = missingSkills.map(
-        (skill) => `Try adding ${skill} to your resume`
-      );
-      aiFeedback = "AI not available";
-      candidateName = "User";
+      suggestions = missingSkills.map((skill) => `Consider adding ${skill} to your resume`);
+      aiFeedback = "AI detailed feedback unavailable.";
     }
 
     res.json({
+      isResume: true,
+      roleSkills,
       skills: foundSkills,
-      score,
       missingSkills,
+      score,
       suggestions,
       aiFeedback,
-      resumeText: text,
       candidateName,
     });
 
-    // Cleanup the uploaded file
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-
   } catch (err) {
     console.error("Resume processing error:", err);
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {

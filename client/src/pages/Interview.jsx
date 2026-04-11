@@ -10,6 +10,8 @@ export default function Interview() {
   const [evaluating, setEvaluating] = useState({});
 
   useEffect(() => {
+    document.title = "Interview Prep | AI Placement Coach";
+
     fetch("/api/interview", {
       method: "POST",
     })
@@ -59,7 +61,7 @@ export default function Interview() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col items-center py-16 px-6 pt-28 font-sans">
+    <div className="relative overflow-hidden flex flex-col items-center py-16 px-6 pt-28 font-sans">
       
       {/* Background ambient gradients */}
       <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none transform -translate-x-1/3 -translate-y-1/3" />
