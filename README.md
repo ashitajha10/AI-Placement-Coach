@@ -1,115 +1,177 @@
-# AI Placement Coach
+<div align="center">
 
-AI Placement Coach is a comprehensive full-stack web application designed to empower job seekers. The platform validates resumes, analyzes technical skills based on specific job roles, detects missing keywords, and provides AI-tailored feedback and interview preparation questions.
+# 🚀 AI Placement Coach
+### *Supercharge your career prep with AI-driven insights and interactive practice.*
 
-## Features
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/ashitajha10/AI-Placement-Coach)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Gemini API](https://img.shields.io/badge/AI-Google%20Gemini-blue)](https://deepmind.google/technologies/gemini/)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js-339933)](https://nodejs.org/)
 
-- **Resume Validation**: Automatically detects if the uploaded document is a valid professional resume using keyword heuristics and AI verification.
-- **Dynamic Role-Based Analysis**: Generates role-specific skill sets dynamically using AI, moving away from static, hardcoded lists.
-- **Skill Gap Detection**: Identifies technical skills present in the resume and highlights missing keywords essential for the targeted role.
-- **Intelligent Scoring**: Calculates an ATS compatibility score based on the specific requirements of the selected job role.
-- **Mock Interviews**: Generates challenging technical and behavioral interview questions tailored to the candidate's profile.
-- **Professional UI**: Features a modern, responsive design built with glassmorphism aesthetics and smooth transitions.
-- **Branding & Contact Integration**: Includes a consistent navbar and footer with integrated contact links for portfolio showcase.
+[Explore the App](#-features) • [View Demo](#-usage) • [Report Bug](https://github.com/ashitajha10/AI-Placement-Coach/issues)
 
-## Tech Stack
+</div>
+
+---
+
+## 📖 Table of Contents
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [⚙️ Installation & Setup](#️-installation--setup)
+- [📂 Folder Structure](#-folder-structure)
+- [🎮 Usage](#-usage)
+- [🔮 Future Enhancements](#-future-enhancements)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
+- [👤 Author](#-author)
+
+---
+
+## ✨ Features
+
+AI Placement Coach is designed to bridge the gap between your resume and your dream job.
+
+| Feature | Description |
+| :--- | :--- |
+| **🛡️ Resume Validation** | Instantly verify if your document is a valid professional resume. |
+| **🎯 Role-Based Analysis** | Evaluate your fit against specific roles like Frontend, Backend, or Data Analyst. |
+| **📊 Intelligent ATS Scoring** | Get a compatibility percentage score based on real-time keyword matching. |
+| **💡 AI-Powered Feedback** | Receive tailored suggestions and strengths even under rate-limit constraints. |
+| **🖱️ Drag & Drop Upload** | Premium, interactive file upload experience with PDF validation. |
+| **🎙️ Mock Interviews** | Practice with AI-generated technical and behavioral questions. |
+| **📈 Mastery Dashboard** | Track your placement readiness at a glance. |
+
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend
-- **React (Vite)**: For a fast, modern user interface.
-- **Tailwind CSS**: For utility-first styling and responsive design.
-- **Lucide React**: For clean, consistent iconography.
-- **React Router**: For seamless navigation between pages.
+- ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+- ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+- ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+- ![Lucide](https://img.shields.io/badge/Lucide_React-FFB13B?style=for-the-badge&logo=lucide&logoColor=white)
 
 ### Backend
-- **Node.js & Express**: For a robust and scalable server architecture.
-- **Google Gemini API**: For dynamic skill generation and resume analysis.
-- **Multer**: For handling multipart/form-data (file uploads).
-- **PDF-Parse**: For extracting raw text from PDF documents.
+- ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+- ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+- ![Gemini](https://img.shields.io/badge/Google_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)
+- ![Multer](https://img.shields.io/badge/Multer-6B7280?style=for-the-badge&logo=files&logoColor=white)
 
-## Installation
+---
 
-### Prerequisites
-- Node.js (v18 or higher)
+## ⚙️ Installation & Setup
+
+Follow these steps to get the project running locally.
+
+<details>
+<summary><b>1. Prerequisites</b></summary>
+- Node.js (v18+)
 - npm or yarn
 - Google Gemini API Key
+</details>
 
-### Setup Steps
+<details>
+<summary><b>2. Clone the Repository</b></summary>
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/ashitajha10/AI-Placement-Coach.git
-   cd AI-Placement-Coach
-   ```
+```bash
+git clone https://github.com/ashitajha10/AI-Placement-Coach.git
+cd AI-Placement-Coach
+```
+</details>
 
-2. **Backend Setup**
-   - Navigate to the server directory:
-     ```bash
-     cd server
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
-   - Create a `.env` file in the `server` folder and add your Gemini API Key:
-     ```env
-     GEMINI_API_KEY=your_api_key_here
-     PORT=5000
-     ```
-   - Start the server:
-     ```bash
-     node index.js
-     ```
+<details>
+<summary><b>3. Backend Configuration</b></summary>
 
-3. **Frontend Setup**
-   - Navigate to the client directory:
-     ```bash
-     cd ../client
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
-   - Start the development server:
-     ```bash
-     npm run dev
-     ```
+```bash
+cd server
+npm install
+```
+Create a `.env` file in the `/server` directory:
+```env
+GEMINI_API_KEY=your_api_key_here
+PORT=5000
+```
+Start server:
+```bash
+node index.js
+```
+</details>
 
-## Folder Structure
+<details>
+<summary><b>4. Frontend Configuration</b></summary>
+
+```bash
+cd ../client
+npm install
+npm run dev
+```
+</details>
+
+---
+
+## 🎮 Usage
+
+1. **Upload Resume**: Select your target job role and drag-and-drop your PDF resume.
+2. **Review Feedback**: The AI consolidates all analysis into one request to save your API quota while providing deep insights.
+3. **Practice**: Go to the **Mock Interview** section to test your skills and get immediate AI feedback on your answers.
+4. **Dashboard**: Monitor your "Placement Readiness" as you improve your score and practice sessions.
+
+---
+
+## 📂 Folder Structure
 
 ```text
 AI-Placement-Coach/
-├── client/             # React frontend (Vite)
+├── client/                 # React + Vite Frontend
 │   ├── src/
-│   │   ├── components/ # Reusable UI components (Navbar, Footer)
-│   │   ├── pages/      # Main application views (Home, Upload, Interview, Dashboard)
-│   │   └── App.jsx     # Global layout and routing
-├── server/             # Express backend
-│   ├── uploads/        # Temporary storage for resume PDFs
-│   └── index.js        # Server logic and AI integration
-└── README.md           # Project documentation
+│   │   ├── components/     # UI Components (Navbar, Footer, etc.)
+│   │   ├── pages/          # Home, Upload, Interview, Dashboard
+│   │   └── App.jsx         # Routes & Layout
+│   └── vite.config.js      # Proxy settings
+├── server/                 # Node + Express Backend
+│   ├── uploads/            # Multer temporary buffer
+│   ├── index.js            # Consolidated AI Logic
+│   └── .env                # Environment variables
+└── README.md
 ```
 
-## Usage
+---
 
-1. **Upload Resume**: Select your target job role (e.g., Frontend Developer) and upload your resume in PDF format.
-2. **Review Analysis**: View your ATS score, detected skills, and missing keywords. Read AI-generated feedback for improvements.
-3. **Practice Interview**: Navigate to the Mock Interview section to answer tailored questions and receive feedback on your responses.
-4. **Track Progress**: Check your dashboard to monitor your overall placement readiness.
+## 🔮 Future Enhancements
 
-## Future Improvements
+- [ ] **Resume Optimizer**: Suggesting exact keyword placements within the resume.
+- [ ] **Multi-Role Comparison**: Compare your resume against multiple roles simultaneously.
+- [ ] **Mock Interview Voice-to-Text**: Voice-enabled practice sessions.
+- [ ] **Exportable Reports**: Download your analysis as a PDF report.
 
-- **AI Enhancements**: Implement more granular feedback on formatting and section structure.
-- **Resume Export**: Allow users to download an optimized PDF version of their resume based on AI suggestions.
-- **Advanced Scoring**: Integrate role-specific weighting for skills (e.g., core vs. secondary skills).
-- **Multi-document Support**: Expand support to DOCX and other text formats.
+---
 
-## Author
+## 🤝 Contributing
+
+Contributions are welcome! If you have a suggestion that would make this better, please fork the repo and create a pull request.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 👤 Author
 
 **Ashita Jha**
-- **Email**: [ashitajha691@gmail.com](mailto:ashitajha691@gmail.com)
-- **LinkedIn**: [in/ashitajha](https://www.linkedin.com/in/ashitajha)
-- **GitHub**: [ashitajha10](https://github.com/ashitajha10)
+- [![Email](https://img.shields.io/badge/Email-ashitajha691%40gmail.com-red?style=flat-square&logo=gmail)](mailto:ashitajha691@gmail.com)
+- [![LinkedIn](https://img.shields.io/badge/LinkedIn-in/ashitajha-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/ashitajha)
+- [![GitHub](https://img.shields.io/badge/GitHub-ashitajha10-lightgrey?style=flat-square&logo=github)](https://github.com/ashitajha10)
 
-## License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+<div align="center">
+  <sub>Built with ❤️ by Ashita Jha</sub>
+</div>
