@@ -116,62 +116,70 @@ app.post("/api/upload", upload.single("resume"), async (req, res) => {
     const pdfData = await pdfParse(dataBuffer);
     const text = pdfData.text;
 
-    const isValidResume = await isResume(text);
-    if (!isValidResume) {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      return res.json({
-        isResume: false,
-        message: "Uploaded file does not appear to be a resume. Please upload a valid professional resume.",
-      });
-    }
-
+    // Use caching for role skills to save API calls
     const roleSkills = await getRoleSkills(targetRole);
     const { foundSkills, missingSkills } = extractSkills(text, roleSkills);
 
     let score = Math.round((foundSkills.length / roleSkills.length) * 100);
-
     let suggestions = [];
     let aiFeedback = "";
     let candidateName = "User";
 
     try {
-      const result = await model.generateContent(
-        `You are an expert AI Placement Coach and Recruiter.
-Analyze the following resume text extracted from a PDF for the target role: "${targetRole}".
-Provide a concise, professional evaluation specifically tailored to how well this candidate fits the role of a ${targetRole}.
+      // CONSOLIDATED PROMPT: Combining validation, name extraction and evaluation into one call to save quota
+      const combinedResult = await model.generateContent(
+        `You are an expert AI Placement Coach. 
+Analyze this extracted text for a candidate applying for: "${targetRole}".
 
-Include:
-1. ATS Score (A number out of 100 representing Applicant Tracking System compatibility for a ${targetRole} role. Format exactly as ATS_SCORE: <number>)
-2. Overall Impression (1-2 sentences)
-3. Key Strengths for ${targetRole} (bullet points)
-4. Areas for Improvement to better fit the ${targetRole} role (bullet points)
+TASK:
+1. Is this a professional resume? (Answer ONLY with "VALID" or "INVALID")
+2. What is the candidate's full name? (If not found, use "User")
+3. Provide an ATS compatibility score (0-100) for the role: ${targetRole}.
+4. Provide a professional evaluation including Key Strengths and Areas for Improvement.
 
-Resume Text:
-"""
-${text.substring(0, 5000)}
-"""`
+FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS:
+VALIDATION: <VALID/INVALID>
+NAME: <Full Name>
+ATS_SCORE: <Number>
+FEEDBACK:
+<Your evaluation here, use bullet points for strengths and improvements>` +
+        `\n\nResume Text:\n"""${text.substring(0, 6000)}"""`
       );
 
-      const response = result.response;
-      let rawFeedback = response.text();
-
-      const atsMatch = rawFeedback.match(/ATS_SCORE:\s*(\d+)/i);
-      if (atsMatch && atsMatch[1]) {
-        score = parseInt(atsMatch[1], 10);
-      }
+      const rawResponse = combinedResult.response.text();
       
-      aiFeedback = rawFeedback.replace(/ATS_SCORE:\s*\d+\s*\n?/, "").trim();
-      suggestions = aiFeedback.split("\n").filter((line) => line.trim() !== "");
+      // Parse consolidated response
+      const isValid = rawResponse.includes("VALIDATION: VALID");
+      if (!isValid && rawResponse.includes("VALIDATION: INVALID")) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.json({
+          isResume: false,
+          message: "Uploaded file does not appear to be a resume. Please upload a valid professional resume.",
+        });
+      }
 
-      const nameResult = await model.generateContent(
-        `Extract the full name of the candidate from the following text. Respond with ONLY the candidate's name, nothing else. If no name is found or it's unclear, respond with "User".\n\nText:\n"""${text.substring(0, 1000)}"""`
-      );
-      candidateName = nameResult.response.text().trim();
+      const nameMatch = rawResponse.match(/NAME:\s*(.*)/i);
+      if (nameMatch) candidateName = nameMatch[1].trim();
+
+      const atsMatch = rawResponse.match(/ATS_SCORE:\s*(\d+)/i);
+      if (atsMatch) score = parseInt(atsMatch[1], 10);
+
+      const feedbackParts = rawResponse.split(/FEEDBACK:/i);
+      if (feedbackParts.length > 1) {
+        aiFeedback = feedbackParts[1].trim();
+        suggestions = aiFeedback.split("\n").filter(l => l.trim() !== "");
+      }
 
     } catch (err) {
-      console.error("Gemini failed during analysis:", err);
-      suggestions = missingSkills.map((skill) => `Consider adding ${skill} to your resume`);
-      aiFeedback = "AI detailed feedback unavailable.";
+      console.error("Consolidated Gemini call failed:", err);
+      // Construct a structured fallback feedback string that the frontend parser can handle
+      suggestions = missingSkills.map((skill) => `Consider adding **${skill}** to your resume`);
+      
+      aiFeedback = `**AI Analysis Service (Rate Limited)**\n` +
+                  `Detailed AI evaluation is temporarily unavailable due to high traffic. However, based on our heuristic analysis for the ${targetRole} role, here are some immediate suggestions:\n\n` +
+                  `**Key Suggestions:**\n` +
+                  suggestions.map(s => `- ${s}`).join('\n') + 
+                  `\n\n**Note:** Please try again in 60 seconds for a full AI-powered strength evaluation.`;
     }
 
     res.json({

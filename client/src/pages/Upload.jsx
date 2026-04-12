@@ -6,6 +6,7 @@ export default function Upload() {
   const [role, setRole] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     document.title = "Upload Resume | AI Placement Coach";
@@ -90,8 +91,29 @@ export default function Upload() {
             </select>
           </div>
 
-          <div className="w-full flex flex-col items-center border-2 border-dashed border-white/20 rounded-xl p-8 mb-6 hover:border-blue-400/50 hover:bg-white/[0.02] transition-colors relative">
-            <svg className="w-12 h-12 text-slate-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <div 
+            className={`w-full flex flex-col items-center border-2 border-dashed rounded-xl p-8 mb-6 transition-all duration-300 relative ${
+              dragging 
+                ? "border-blue-500 bg-blue-500/10 scale-[1.02]" 
+                : "border-white/20 hover:border-blue-400/50 hover:bg-white/[0.02]"
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              const droppedFile = e.dataTransfer.files[0];
+              if (droppedFile && droppedFile.type === "application/pdf") {
+                setFile(droppedFile);
+              } else {
+                alert("Please drop a valid PDF file.");
+              }
+            }}
+          >
+            <svg className={`w-12 h-12 mb-4 transition-colors ${dragging ? "text-blue-400" : "text-slate-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <label className="block text-slate-300 font-medium mb-2 cursor-pointer text-center">
@@ -184,10 +206,10 @@ export default function Upload() {
                   <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                   <h3 className="text-lg font-semibold text-indigo-300 mb-4 flex items-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    {result.aiFeedback === "AI detailed feedback unavailable." ? "Feedback" : "AI Feedback"}
+                    {result.aiFeedback?.includes("Rate Limited") ? "Heuristic Feedback" : "AI Feedback"}
                   </h3>
                   
-                  {result.aiFeedback && result.aiFeedback !== "AI detailed feedback unavailable." ? (
+                  {result.aiFeedback ? (
                     <div className="text-sm text-slate-300 leading-relaxed space-y-5">
                       {result.aiFeedback.split('\n').filter(line => line.trim() !== '').map((line, idx) => {
                         const trimmedLine = line.trim();
