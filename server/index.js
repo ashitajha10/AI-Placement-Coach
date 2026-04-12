@@ -179,7 +179,7 @@ FEEDBACK:
                   `Detailed AI evaluation is temporarily unavailable due to high traffic. However, based on our heuristic analysis for the ${targetRole} role, here are some immediate suggestions:\n\n` +
                   `**Key Suggestions:**\n` +
                   suggestions.map(s => `- ${s}`).join('\n') + 
-                  `\n\n**Note:** Please try again in 60 seconds for a full AI-powered strength evaluation.`;
+                  `\n\n**Note:** Please try again later for a full AI-powered strength evaluation.`;
     }
 
     res.json({
