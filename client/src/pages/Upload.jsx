@@ -188,8 +188,86 @@ export default function Upload() {
                   </h3>
                   
                   {result.aiFeedback && result.aiFeedback !== "AI detailed feedback unavailable." ? (
-                    <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
-                      {result.aiFeedback}
+                    <div className="text-sm text-slate-300 leading-relaxed space-y-5">
+                      {result.aiFeedback.split('\n').filter(line => line.trim() !== '').map((line, idx) => {
+                        const trimmedLine = line.trim();
+                        
+                        // Bullet point detection (do this before general label check)
+                        if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.startsWith('•')) {
+                          const cleanLine = trimmedLine.replace(/^[-*•]\s*/, '');
+                          const colonIndex = cleanLine.indexOf(':');
+                          
+                          if (colonIndex > 0 && colonIndex < 40) {
+                            const label = cleanLine.substring(0, colonIndex).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                            const content = cleanLine.substring(colonIndex + 1).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                            return (
+                              <div key={idx} className="flex gap-3 ml-2 group mt-2">
+                                <span className="text-blue-500/80 mt-1">•</span>
+                                <div>
+                                  <span className="font-bold text-blue-300 mr-2">{label}:</span>
+                                  <span className="text-slate-300 font-normal">{content}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          const cleanBullet = cleanLine.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                          return (
+                            <div key={idx} className="flex gap-3 ml-2 group mt-2">
+                              <span className="text-blue-500/80 group-hover:text-blue-400 transition-colors mt-1">•</span>
+                              <span className="text-slate-300">{cleanBullet}</span>
+                            </div>
+                          );
+                        }
+
+                        // Check if standalone line contains a label-content pair
+                        const colonIndex = trimmedLine.indexOf(':');
+                        const hasColon = colonIndex > 0 && colonIndex < 40; 
+                        
+                        if (hasColon) {
+                          const label = trimmedLine.substring(0, colonIndex).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').replace(/^\d+\.\s*/, '').trim();
+                          const content = trimmedLine.substring(colonIndex + 1).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                          
+                          if (content.length > 0) {
+                            return (
+                              <div key={idx} className="mt-4 first:mt-0">
+                                <span className="font-bold text-blue-300 mr-2">{label}:</span>
+                                <span className="text-slate-400 font-normal">{content}</span>
+                              </div>
+                            );
+                          }
+                        }
+
+                        // Improved heading detection for standalone headers
+                        const isHeading = 
+                          (trimmedLine.includes('**') && !hasColon) || 
+                          (trimmedLine.startsWith('"') && trimmedLine.endsWith('"') && trimmedLine.length < 50) ||
+                          (trimmedLine.endsWith(':') && trimmedLine.length < 60) ||
+                          (/^\d+\./.test(trimmedLine));
+                        
+                        if (isHeading) {
+                          const cleanHeading = trimmedLine
+                            .replace(/\*\*/g, '')
+                            .replace(/^["']|["']$/g, '')
+                            .replace(/^\d+\.\s*/, '')
+                            .replace(/:$/, '')
+                            .trim();
+                          
+                          return (
+                            <h4 key={idx} className="font-bold text-blue-300 mt-6 first:mt-0 text-base tracking-wide flex items-center gap-2">
+                              <span className="w-1.5 h-4 bg-blue-500/50 rounded-full"></span>
+                              {cleanHeading}
+                            </h4>
+                          );
+                        }
+
+                        // Normal paragraph
+                        return (
+                          <p key={idx} className="text-slate-400 font-normal">
+                            {trimmedLine.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim()}
+                          </p>
+                        );
+                      })}
                     </div>
                   ) : (
                     <ul className="list-disc list-inside text-sm text-slate-300 space-y-2">

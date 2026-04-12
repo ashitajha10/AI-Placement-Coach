@@ -133,7 +133,85 @@ export default function Interview() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                             AI Evaluation
                           </h4>
-                          <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{evaluations[i]}</p>
+                          <div className="text-sm text-slate-200 leading-relaxed space-y-4">
+                            {evaluations[i].split('\n').filter(line => line.trim() !== '').map((line, idx) => {
+                              const trimmedLine = line.trim();
+                              
+                              // Bullet point detection (priority)
+                              if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*') || trimmedLine.startsWith('•')) {
+                                const cleanLine = trimmedLine.replace(/^[-*•]\s*/, '');
+                                const colonIndex = cleanLine.indexOf(':');
+                                
+                                if (colonIndex > 0 && colonIndex < 40) {
+                                  const label = cleanLine.substring(0, colonIndex).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                                  const content = cleanLine.substring(colonIndex + 1).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                                  return (
+                                    <div key={idx} className="flex gap-2 ml-1 mt-2">
+                                      <span className="text-indigo-500 text-xs mt-1">•</span>
+                                      <div>
+                                        <span className="font-bold text-indigo-300 mr-2">{label}:</span>
+                                        <span className="text-slate-300 font-normal">{content}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                const cleanBullet = cleanLine.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                                return (
+                                  <div key={idx} className="flex gap-2 ml-1 group mt-2">
+                                    <span className="text-indigo-500 text-xs mt-1 group-hover:text-indigo-400 transition-colors">•</span>
+                                    <span className="text-slate-300">{cleanBullet}</span>
+                                  </div>
+                                );
+                              }
+
+                              // Handle standalone "Label: Content" pairs
+                              const colonIndex = trimmedLine.indexOf(':');
+                              const hasColon = colonIndex > 0 && colonIndex < 40;
+                              
+                              if (hasColon) {
+                                const label = trimmedLine.substring(0, colonIndex).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').replace(/^\d+\.\s*/, '').trim();
+                                const content = trimmedLine.substring(colonIndex + 1).replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim();
+                                
+                                if (content.length > 0) {
+                                  return (
+                                    <div key={idx} className="mt-3 first:mt-0">
+                                      <span className="font-bold text-indigo-300 mr-2">{label}:</span>
+                                      <span className="text-slate-300 font-normal">{content}</span>
+                                    </div>
+                                  );
+                                }
+                              }
+
+                              const isHeading = 
+                                (trimmedLine.includes('**') && !hasColon) || 
+                                (trimmedLine.startsWith('"') && trimmedLine.endsWith('"') && trimmedLine.length < 50) ||
+                                (trimmedLine.endsWith(':') && trimmedLine.length < 60) ||
+                                (/^\d+\./.test(trimmedLine));
+                              
+                              if (isHeading) {
+                                const cleanHeading = trimmedLine
+                                  .replace(/\*\*/g, '')
+                                  .replace(/^["']|["']$/g, '')
+                                  .replace(/^\d+\.\s*/, '')
+                                  .replace(/:$/, '')
+                                  .trim();
+
+                                return (
+                                  <h5 key={idx} className="font-bold text-indigo-300 mt-4 first:mt-0 flex items-center gap-2">
+                                    <span className="w-1 h-3 bg-indigo-500/50 rounded-full"></span>
+                                    {cleanHeading}
+                                  </h5>
+                                );
+                              }
+
+                              return (
+                                <p key={idx} className="text-slate-300 text-sm">
+                                  {trimmedLine.replace(/\*\*/g, '').replace(/^["']|["']$/g, '').trim()}
+                                </p>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     )}
