@@ -1,4 +1,5 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const express = require("express");
 const cors = require("cors");
@@ -6,8 +7,6 @@ const multer = require("multer");
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const path = require("path");
-
 const app = express();
 
 app.use(cors());
@@ -19,7 +18,42 @@ app.use(express.static(path.join(__dirname, "../client/dist")));
 const upload = multer({ dest: "uploads/" });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-flash-latest",
+  generationConfig: {
+    temperature: 0.7,
+    topK: 1,
+    topP: 1,
+    maxOutputTokens: 2048,
+  },
+  safetySettings: [
+    {
+      category: "HARM_CATEGORY_HARASSMENT",
+      threshold: "BLOCK_NONE",
+    },
+    {
+      category: "HARM_CATEGORY_HATE_SPEECH",
+      threshold: "BLOCK_NONE",
+    },
+    {
+      category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      threshold: "BLOCK_NONE",
+    },
+    {
+      category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+      threshold: "BLOCK_NONE",
+    },
+  ],
+});
+
+app.get("/api/health-ai", async (req, res) => {
+  try {
+    const result = await model.generateContent("Respond with SUCCESS");
+    res.json({ status: "ok", message: result.response.text().trim() });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
 
 const fallbackRoleSkills = {
   frontend: ["html", "css", "javascript", "react", "tailwind", "next.js", "typescript", "browser developer tools"],
@@ -171,15 +205,18 @@ FEEDBACK:
       }
 
     } catch (err) {
-      console.error("Consolidated Gemini call failed:", err);
+      console.error("Consolidated Gemini call failed:", err.message || err);
+      
+      // Check if it's a safety block
+      const isSafetyBlock = err.message && (err.message.includes("SAFETY") || err.message.includes("candidate"));
       // Construct a structured fallback feedback string that the frontend parser can handle
       suggestions = missingSkills.map((skill) => `Consider adding **${skill}** to your resume`);
       
-      aiFeedback = `**AI Analysis Service (Rate Limited)**\n` +
-                  `Detailed AI evaluation is temporarily unavailable due to high traffic. However, based on our heuristic analysis for the ${targetRole} role, here are some immediate suggestions:\n\n` +
-                  `**Key Suggestions:**\n` +
+      aiFeedback = `**AI Analysis Service (Offline)**\n` +
+                  `Detailed AI evaluation is temporarily unavailable. This usually happens when the AI service is either rate-limited or the document content triggered a safety filter.\n\n` +
+                  `**Heuristic Suggestions:**\n` +
                   suggestions.map(s => `- ${s}`).join('\n') + 
-                  `\n\n**Note:** Please try again later for a full AI-powered strength evaluation.`;
+                  `\n\n**Note:** Please try again with a different resume or wait a few minutes if you've made multiple requests.`;
     }
 
     res.json({
